@@ -6,6 +6,11 @@ How the versions work (the third number is the ZMK version):
 - v0.0.4.N        versions for the next ZMK version (v0.4)
 - New work is developed on the branch `dev`
 
+# FEATURES v0.0.4 (not released yet, branch `zmk-v0.4`) · next ZMK (Zephyr 4.1)
+=======================================
+- [x] Builds with the next ZMK (Zephyr 4.1) without changes in the code
+- [ ] Tested on a Corne with vikoto and nice!view only
+
 # FEATURES NEXT (not released yet, planned as v0.0.3.1 · ZMK v0.3)
 =======================================
 First public version.
