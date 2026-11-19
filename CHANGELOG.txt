@@ -1,0 +1,20 @@
+Changelog of zmk-peripheral-status-sync.
+https://github.com/mctechnology17/zmk-peripheral-status-sync/blob/main/CHANGELOG.txt
+
+How the versions work (the third number is the ZMK version):
+- v0.0.3.N        versions for ZMK v0.3 (branch `zmk-v0.3`, and `main` while it is on ZMK v0.3)
+- v0.0.4.N        versions for the next ZMK version (v0.4)
+- New work is developed on the branch `dev`
+
+# FEATURES NEXT (not released yet, planned as v0.0.3.1 · ZMK v0.3)
+=======================================
+First public version.
+
+# NEW FEATURES
+- [x] One split message (`ussync`) from the central to the peripherals with WPM, modifiers, BLE profile, layer, central battery and HID indicators
+- [x] State on the peripheral with one event per field: `zmk_wpm_peripheral_state_changed`, `zmk_modifiers_peripheral_state_changed`, `zmk_profile_peripheral_state_changed`, `zmk_layer_peripheral_state_changed`, `zmk_central_battery_peripheral_state_changed`, `zmk_central_hid_indicators_peripheral_state_changed`
+- [x] One option per field on the central: CONFIG_ZMK_PERIPHERAL_STATUS_SYNC_WPM, _MODIFIERS, _PROFILE, _LAYER, _CENTRAL_BATTERY, _HID_INDICATORS
+- [x] Local WPM on the peripheral without the central (CONFIG_ZMK_WPM_PERIPHERAL_SOURCE_LOCAL)
+- [x] Layer labels on the peripheral (CONFIG_ZMK_LAYER_PERIPHERAL_LABEL_0 ... _15)
+- [x] The peripheral remembers the last BLE profile after a reboot (CONFIG_ZMK_PROFILE_PERIPHERAL_SETTINGS)
+- [x] Startup retries so the peripheral gets the current state even when nothing changes after boot

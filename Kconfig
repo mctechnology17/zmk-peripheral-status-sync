@@ -1,0 +1,305 @@
+# Copyright (c) 2026 Marcos Chow Castro
+# SPDX-License-Identifier: MIT
+
+menu "ZMK Peripheral Status Sync"
+
+# ---------------------------------------------------------------------------
+# Transport: one split message (behavior "ussync") from the central to the
+# peripherals with every enabled field.
+# ---------------------------------------------------------------------------
+
+config ZMK_PERIPHERAL_STATUS_SYNC
+    bool "Central to peripheral status sync"
+    depends on ZMK_SPLIT
+    help
+      Send display state of the central (WPM, modifiers, BLE profile, layer,
+      battery, HID indicators) to the split peripherals in one message.
+      Turned on by the options below; it does not need to be set by hand.
+
+config ZMK_PERIPHERAL_STATUS_SYNC_CENTRAL
+    bool "Send the status from the central"
+    depends on ZMK_SPLIT && ZMK_SPLIT_ROLE_CENTRAL
+    select ZMK_PERIPHERAL_STATUS_SYNC
+    help
+      Central side. Turned on by any ZMK_PERIPHERAL_STATUS_SYNC_<field>
+      option, the battery and the HID indicators included.
+
+config ZMK_PERIPHERAL_STATUS_SYNC_RECEIVER
+    bool "Receive the status on the peripheral"
+    depends on ZMK_SPLIT && !ZMK_SPLIT_ROLE_CENTRAL
+    select ZMK_PERIPHERAL_STATUS_SYNC
+    default y if ZMK_WPM_PERIPHERAL_SOURCE_SYNCED || ZMK_MODIFIERS_PERIPHERAL_SOURCE_SYNCED || ZMK_PROFILE_PERIPHERAL_SOURCE_SYNCED || ZMK_LAYER_PERIPHERAL_SOURCE_SYNCED
+    help
+      Peripheral side. Receives the message and updates the state modules
+      below. On by default when any of them takes its state from the central.
+
+# What the central sends.
+
+config ZMK_PERIPHERAL_STATUS_SYNC_WPM
+    bool "Send WPM"
+    depends on ZMK_SPLIT && ZMK_SPLIT_ROLE_CENTRAL && ZMK_WPM
+    select ZMK_PERIPHERAL_STATUS_SYNC_CENTRAL
+
+config ZMK_PERIPHERAL_STATUS_SYNC_MODIFIERS
+    bool "Send explicit modifiers"
+    depends on ZMK_SPLIT && ZMK_SPLIT_ROLE_CENTRAL
+    select ZMK_PERIPHERAL_STATUS_SYNC_CENTRAL
+
+config ZMK_PERIPHERAL_STATUS_SYNC_PROFILE
+    bool "Send active BLE profile state"
+    depends on ZMK_SPLIT && ZMK_SPLIT_ROLE_CENTRAL && ZMK_BLE
+    select ZMK_PERIPHERAL_STATUS_SYNC_CENTRAL
+
+config ZMK_PERIPHERAL_STATUS_SYNC_LAYER
+    bool "Send highest active layer"
+    depends on ZMK_SPLIT && ZMK_SPLIT_ROLE_CENTRAL
+    select ZMK_PERIPHERAL_STATUS_SYNC_CENTRAL
+
+config ZMK_PERIPHERAL_STATUS_SYNC_CENTRAL_BATTERY
+    bool "Sync central battery level"
+    depends on ZMK_SPLIT
+    select ZMK_PERIPHERAL_STATUS_SYNC_CENTRAL if ZMK_SPLIT_ROLE_CENTRAL
+    select ZMK_PERIPHERAL_STATUS_SYNC_RECEIVER if !ZMK_SPLIT_ROLE_CENTRAL
+    help
+      Include the central battery level in the message. Set it on both
+      halves. The central only sends it when ZMK_BATTERY is available; the
+      peripheral does not need a battery sensor of its own to receive it.
+
+config ZMK_PERIPHERAL_STATUS_SYNC_HID_INDICATORS
+    bool "Sync central HID indicators"
+    depends on ZMK_SPLIT
+    select ZMK_PERIPHERAL_STATUS_SYNC_CENTRAL if ZMK_SPLIT_ROLE_CENTRAL
+    select ZMK_PERIPHERAL_STATUS_SYNC_RECEIVER if !ZMK_SPLIT_ROLE_CENTRAL
+    select ZMK_HID_INDICATORS if ZMK_SPLIT_ROLE_CENTRAL
+    help
+      Include Num Lock, Caps Lock and Scroll Lock of the central in the
+      message. Set it on both halves.
+
+config ZMK_PERIPHERAL_STATUS_SYNC_INTERVAL_MS
+    int "Coalescing interval"
+    depends on ZMK_PERIPHERAL_STATUS_SYNC_CENTRAL
+    default 10
+    range 0 1000
+    help
+      Delay used to join several state changes into one split message.
+
+config ZMK_PERIPHERAL_STATUS_SYNC_INITIAL_DELAY_MS
+    int "Delay before the first sync after boot"
+    depends on ZMK_PERIPHERAL_STATUS_SYNC_CENTRAL
+    default 1500
+
+config ZMK_PERIPHERAL_STATUS_SYNC_INITIAL_RETRY_MS
+    int "Retry interval of the first sync"
+    depends on ZMK_PERIPHERAL_STATUS_SYNC_CENTRAL
+    default 1000
+
+config ZMK_PERIPHERAL_STATUS_SYNC_INITIAL_ATTEMPTS
+    int "Attempts of the first sync"
+    depends on ZMK_PERIPHERAL_STATUS_SYNC_CENTRAL
+    default 60
+
+# ---------------------------------------------------------------------------
+# State on the peripheral: what the display widgets read.
+# ---------------------------------------------------------------------------
+
+# WPM
+
+config ZMK_WPM_PERIPHERAL
+    bool "Expose WPM state on split peripheral"
+    depends on ZMK_SPLIT && !ZMK_SPLIT_ROLE_CENTRAL
+    help
+      Expose words-per-minute state on a split peripheral for displays or
+      other modules. The state can be calculated locally or received from the
+      central side.
+
+if ZMK_WPM_PERIPHERAL
+
+choice ZMK_WPM_PERIPHERAL_SOURCE
+    prompt "Peripheral WPM source"
+    default ZMK_WPM_PERIPHERAL_SOURCE_SYNCED
+
+config ZMK_WPM_PERIPHERAL_SOURCE_SYNCED
+    bool "Receive WPM from central"
+    help
+      Receive WPM updates sent by a central-side instance of this module.
+
+config ZMK_WPM_PERIPHERAL_SOURCE_LOCAL
+    bool "Calculate from local peripheral key positions"
+    help
+      Calculate WPM from local peripheral position releases before they are
+      transported to central.
+
+endchoice
+
+config ZMK_WPM_PERIPHERAL_UPDATE_INTERVAL_SECONDS
+    int "Peripheral WPM update interval in seconds"
+    default 1
+    range 1 60
+    depends on ZMK_WPM_PERIPHERAL_SOURCE_LOCAL
+
+config ZMK_WPM_PERIPHERAL_RESET_INTERVAL_SECONDS
+    int "Peripheral WPM reset interval in seconds"
+    default 5
+    range 1 300
+    depends on ZMK_WPM_PERIPHERAL_SOURCE_LOCAL
+
+config ZMK_WIDGET_WPM_PERIPHERAL_STATUS
+    bool "Widget for displaying split peripheral WPM"
+    depends on ZMK_DISPLAY
+    select LV_USE_LABEL
+
+endif # ZMK_WPM_PERIPHERAL
+
+# Modifiers
+
+config ZMK_MODIFIERS_PERIPHERAL
+    bool "Expose modifiers state on split peripheral"
+    depends on ZMK_SPLIT && !ZMK_SPLIT_ROLE_CENTRAL
+    help
+      Expose central modifier state on a split peripheral for displays or
+      other modules.
+
+if ZMK_MODIFIERS_PERIPHERAL
+
+choice ZMK_MODIFIERS_PERIPHERAL_SOURCE
+    prompt "Peripheral modifiers source"
+    default ZMK_MODIFIERS_PERIPHERAL_SOURCE_SYNCED
+
+config ZMK_MODIFIERS_PERIPHERAL_SOURCE_SYNCED
+    bool "Receive modifiers from central"
+    help
+      Receive explicit modifier state updates sent by the central side.
+
+endchoice
+
+endif # ZMK_MODIFIERS_PERIPHERAL
+
+# BLE profile
+
+config ZMK_PROFILE_PERIPHERAL
+    bool "Profile state on split peripheral"
+    depends on ZMK_SPLIT && !ZMK_SPLIT_ROLE_CENTRAL
+    help
+      Expose synchronized central BLE profile state on a split peripheral.
+
+config ZMK_PROFILE_PERIPHERAL_SOURCE_SYNCED
+    bool "Receive profile state from central"
+    depends on ZMK_PROFILE_PERIPHERAL
+    default y
+    help
+      Receive central profile state through the split behavior invocation channel.
+
+config ZMK_PROFILE_PERIPHERAL_SETTINGS
+    bool "Persist synced profile state on peripheral"
+    depends on ZMK_PROFILE_PERIPHERAL && SETTINGS
+    default y
+    help
+      Store the last profile state received by the peripheral. This lets the
+      peripheral display the last known central profile after a peripheral-only
+      reboot, before the central sends a fresh sync.
+
+# Layer
+
+config ZMK_LAYER_PERIPHERAL
+    bool "Layer state on split peripheral"
+    depends on ZMK_SPLIT && !ZMK_SPLIT_ROLE_CENTRAL
+    help
+      Expose synchronized central active layer state on a split peripheral.
+
+config ZMK_LAYER_PERIPHERAL_SOURCE_SYNCED
+    bool "Receive layer state from central"
+    depends on ZMK_LAYER_PERIPHERAL
+    default y
+    help
+      Receive central layer state through the split behavior invocation channel.
+
+config ZMK_LAYER_PERIPHERAL_LABELS
+    bool "Use local layer labels on peripheral"
+    depends on ZMK_LAYER_PERIPHERAL
+    default y
+    help
+      Resolve synced layer indexes to local labels on the peripheral. This keeps
+      the split payload compact and lets display widgets show names without
+      requiring keymap layer-name symbols in the peripheral firmware.
+
+config ZMK_LAYER_PERIPHERAL_LABEL_0
+    string "Peripheral label for layer 0"
+    depends on ZMK_LAYER_PERIPHERAL_LABELS
+    default ""
+
+config ZMK_LAYER_PERIPHERAL_LABEL_1
+    string "Peripheral label for layer 1"
+    depends on ZMK_LAYER_PERIPHERAL_LABELS
+    default ""
+
+config ZMK_LAYER_PERIPHERAL_LABEL_2
+    string "Peripheral label for layer 2"
+    depends on ZMK_LAYER_PERIPHERAL_LABELS
+    default ""
+
+config ZMK_LAYER_PERIPHERAL_LABEL_3
+    string "Peripheral label for layer 3"
+    depends on ZMK_LAYER_PERIPHERAL_LABELS
+    default ""
+
+config ZMK_LAYER_PERIPHERAL_LABEL_4
+    string "Peripheral label for layer 4"
+    depends on ZMK_LAYER_PERIPHERAL_LABELS
+    default ""
+
+config ZMK_LAYER_PERIPHERAL_LABEL_5
+    string "Peripheral label for layer 5"
+    depends on ZMK_LAYER_PERIPHERAL_LABELS
+    default ""
+
+config ZMK_LAYER_PERIPHERAL_LABEL_6
+    string "Peripheral label for layer 6"
+    depends on ZMK_LAYER_PERIPHERAL_LABELS
+    default ""
+
+config ZMK_LAYER_PERIPHERAL_LABEL_7
+    string "Peripheral label for layer 7"
+    depends on ZMK_LAYER_PERIPHERAL_LABELS
+    default ""
+
+config ZMK_LAYER_PERIPHERAL_LABEL_8
+    string "Peripheral label for layer 8"
+    depends on ZMK_LAYER_PERIPHERAL_LABELS
+    default ""
+
+config ZMK_LAYER_PERIPHERAL_LABEL_9
+    string "Peripheral label for layer 9"
+    depends on ZMK_LAYER_PERIPHERAL_LABELS
+    default ""
+
+config ZMK_LAYER_PERIPHERAL_LABEL_10
+    string "Peripheral label for layer 10"
+    depends on ZMK_LAYER_PERIPHERAL_LABELS
+    default ""
+
+config ZMK_LAYER_PERIPHERAL_LABEL_11
+    string "Peripheral label for layer 11"
+    depends on ZMK_LAYER_PERIPHERAL_LABELS
+    default ""
+
+config ZMK_LAYER_PERIPHERAL_LABEL_12
+    string "Peripheral label for layer 12"
+    depends on ZMK_LAYER_PERIPHERAL_LABELS
+    default ""
+
+config ZMK_LAYER_PERIPHERAL_LABEL_13
+    string "Peripheral label for layer 13"
+    depends on ZMK_LAYER_PERIPHERAL_LABELS
+    default ""
+
+config ZMK_LAYER_PERIPHERAL_LABEL_14
+    string "Peripheral label for layer 14"
+    depends on ZMK_LAYER_PERIPHERAL_LABELS
+    default ""
+
+config ZMK_LAYER_PERIPHERAL_LABEL_15
+    string "Peripheral label for layer 15"
+    depends on ZMK_LAYER_PERIPHERAL_LABELS
+    default ""
+
+endmenu

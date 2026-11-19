@@ -1,0 +1,31 @@
+# Copyright (c) 2026 Marcos Chow Castro
+# SPDX-License-Identifier: MIT
+
+zephyr_library()
+
+zephyr_include_directories(include)
+zephyr_include_directories(${APPLICATION_SOURCE_DIR}/include)
+
+# Transport
+zephyr_library_sources_ifdef(CONFIG_ZMK_PERIPHERAL_STATUS_SYNC src/peripheral_status_sync_state.c)
+zephyr_library_sources_ifdef(CONFIG_ZMK_PERIPHERAL_STATUS_SYNC src/events/central_battery_peripheral_state_changed.c)
+zephyr_library_sources_ifdef(CONFIG_ZMK_PERIPHERAL_STATUS_SYNC src/events/central_hid_indicators_peripheral_state_changed.c)
+
+if(CONFIG_ZMK_SPLIT AND CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
+  zephyr_library_sources_ifdef(CONFIG_ZMK_PERIPHERAL_STATUS_SYNC_CENTRAL src/peripheral_status_sync_central.c)
+endif()
+
+if(CONFIG_ZMK_SPLIT AND (NOT CONFIG_ZMK_SPLIT_ROLE_CENTRAL))
+  zephyr_library_sources_ifdef(CONFIG_ZMK_PERIPHERAL_STATUS_SYNC_RECEIVER src/behaviors/behavior_peripheral_status_sync.c)
+
+  # State on the peripheral
+  zephyr_library_sources_ifdef(CONFIG_ZMK_WPM_PERIPHERAL src/wpm_peripheral.c)
+  zephyr_library_sources_ifdef(CONFIG_ZMK_WPM_PERIPHERAL src/events/wpm_peripheral_state_changed.c)
+  zephyr_library_sources_ifdef(CONFIG_ZMK_WIDGET_WPM_PERIPHERAL_STATUS src/display/widgets/wpm_peripheral_status.c)
+  zephyr_library_sources_ifdef(CONFIG_ZMK_MODIFIERS_PERIPHERAL src/modifiers_peripheral.c)
+  zephyr_library_sources_ifdef(CONFIG_ZMK_MODIFIERS_PERIPHERAL src/events/modifiers_peripheral_state_changed.c)
+  zephyr_library_sources_ifdef(CONFIG_ZMK_PROFILE_PERIPHERAL src/profile_peripheral.c)
+  zephyr_library_sources_ifdef(CONFIG_ZMK_PROFILE_PERIPHERAL src/events/profile_peripheral_state_changed.c)
+  zephyr_library_sources_ifdef(CONFIG_ZMK_LAYER_PERIPHERAL src/layer_peripheral.c)
+  zephyr_library_sources_ifdef(CONFIG_ZMK_LAYER_PERIPHERAL src/events/layer_peripheral_state_changed.c)
+endif()
