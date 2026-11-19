@@ -1,8 +1,13 @@
-# zmk-peripheral-status-sync
-
 <!-- mc-follow-top:start -->
 <div align="center">
 
+  <a href="https://youtube.com/@mctechnology17">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/mctechnology17/mctechnology17/blob/main/src/mctechnology_banner_dark.png?raw=true" />
+      <img alt="MC Technology" width="420px" src="https://github.com/mctechnology17/mctechnology17/blob/main/src/mctechnology_banner_light.png?raw=true" />
+    </picture>
+  </a>
+  <br>
   <a href="https://youtube.com/@mctechnology17"><img align="center" alt="MC Technology | YouTube" width="22px" src="https://github.com/mctechnology17/mctechnology17/blob/main/src/youtube.png" /></a>
   <a href="https://www.instagram.com/mctechnology17/"><img align="center" alt="MC Technology | Instagram" width="22px" src="https://github.com/mctechnology17/mctechnology17/blob/main/src/instagram.png" /></a>
   <a href="https://www.facebook.com/mctechnology17/"><img align="center" alt="MC Technology | Facebook" width="22px" src="https://github.com/mctechnology17/mctechnology17/blob/main/src/facebook.png" /></a>
@@ -10,6 +15,8 @@
 
 </div>
 <!-- mc-follow-top:end -->
+
+# zmk-peripheral-status-sync
 
 ZMK module that shows the state of the **central** half on the **peripheral**
 half of a split keyboard: WPM, modifiers, BLE profile, active layer, central
